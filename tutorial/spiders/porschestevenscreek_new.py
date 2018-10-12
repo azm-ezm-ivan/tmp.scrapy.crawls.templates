@@ -2,6 +2,7 @@ import re
 
 import scrapy
 from scrapy import Selector
+from scrapy.exporters import JsonItemExporter
 from scrapy.selector import SelectorList
 
 __all__ = ['Selector', 'SelectorList']
@@ -83,20 +84,28 @@ class PorscheStevensCreek(scrapy.Spider):
         vehicle['int_color'] = listing.xpath(
             '//*[@id="tab-details"]/div[3]/table/tbody/tr[2]/td[2]/text()').extract_first().strip()
         vehicle['stock_no'] = listing.xpath(
-            '//*[@id="tab-details"]/div[3]/table/tbody/tr[3]/td[2]').extract_first().strip()
+            '//*[@id="tab-details"]/div[3]/table/tbody/tr[3]/td[2]/text()').extract_first().strip()
         vehicle['miles'] = "0"
         vehicle['vin'] = listing.xpath(
-            '//*[@id="tab-details"]/div[3]/table/tbody/tr[4]/td[2]').extract_first()
+            '//*[@id="tab-details"]/div[3]/table/tbody/tr[4]/td[2]/text()').extract_first()
         vehicle['url'] = listing.url
         vehicle['price'] = listing.xpath('//*[@id="vdp-price"]/div/h4/text()').extract_first().lstrip('$')
         vehicle['veh_state'] = "new"
-        vehicle['engine'] = listing.xpath('//*[@id="tab-details"]/div[2]/table/tbody/tr[3]/td[2]').extract_first()
-        vehicle['transmission'] = listing.xpath('//*[@id="tab-details"]/div[2]/table/tbody/tr[4]/td[2]').extract_first()
-        vehicle['drivetrain'] = listing.xpath('//*[@id="tab-details"]/div[2]/table/tbody/tr[5]/td[2]').extract_first()
-        vehicle['body_style'] = listing.xpath('//*[@id="vdp-title"]/div/div/div[1]/div[1]/div[1]/h4').extract_first()
-
+        vehicle['engine'] = listing.xpath('//*[@id="tab-details"]/div[2]/table/tbody/tr[3]/td[2]/text()').extract_first()
+        vehicle['transmission'] = listing.xpath('//*[@id="tab-details"]/div[2]/table/tbody/tr[4]/td[2]/text()').extract_first()
+        vehicle['drivetrain'] = listing.xpath('//*[@id="tab-details"]/div[2]/table/tbody/tr[5]/td[2]/text()').extract_first()
+        vehicle['body_type'] = listing.xpath('//*[@id="vdp-title"]/div/div/div[1]/div[1]/div[1]/h4/text()').extract_first().strip()
+        vehicle['title'] = listing.xpath('/html/head/title/text()').extract_first()
         image_urls = listing.css('#tab-slideshow-photos .swiper-slide a::attr(href)').extract()
 
-        image_url = "https:" + image_urls[0]
-        image_page_url = ''
+        result = ""
+        for img in image_urls:
+            result = result + "http:" + img + ","
+        vehicle['image'] = result.rstrip(',')
         yield vehicle
+
+    def __init__(self):
+            self.file = open("books.json", 'wb')
+            self.exporter = JsonItemExporter(self.file, encoding='utf-8', ensure_ascii=False)
+            self.exporter.start_exporting()
+
