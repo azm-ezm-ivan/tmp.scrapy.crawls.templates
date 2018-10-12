@@ -2,7 +2,6 @@ import scrapy
 import requests
 import logging
 import json
-from urlparse import urlparse
 from scrapy import signals
 from scrapy import Spider
 
